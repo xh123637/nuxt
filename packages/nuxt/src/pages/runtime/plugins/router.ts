@@ -7,7 +7,7 @@ import { isSamePath, withBase, withoutBase } from 'ufo'
 import type { NuxtApp, Plugin } from '#app/nuxt'
 import type { RouteMiddleware } from '#app/composables/router'
 
-import { generateRouteKey, toArray } from '../utils'
+import { generateRouteKey, isDeferredRoute, toArray } from '../utils'
 
 import { getRouteRules } from '#app/composables/manifest'
 import { defineNuxtPlugin, useRuntimeConfig } from '#app/nuxt'
@@ -23,9 +23,6 @@ import { pageIslandRoutes } from '#build/components.islands.mjs'
 import { serverPathFallback, tracingChannelNuxt } from '#build/nuxt.config.mjs'
 import { traceAsync } from '#app/internal/tracing'
 import { documentURL } from '#app/internal/location'
-
-// matches a trailing slash on the path only, leaving query and hash significant
-const PATH_TRAILING_SLASH_RE = /\/(?=$|[?#])/
 
 // https://github.com/vuejs/router/blob/4a0cc8b9c1e642cdf47cc007fa5bbebde70afc66/packages/router/src/history/html5.ts#L37
 function createCurrentLocation (
@@ -226,7 +223,7 @@ const plugin: Plugin<{ router: Router }> = defineNuxtPlugin({
       && nuxtApp.isHydrating
       && nuxtApp.payload.prerenderedAt
       && nuxtApp.payload.path
-      && initialURL.replace(PATH_TRAILING_SLASH_RE, '') !== nuxtApp.payload.path.replace(PATH_TRAILING_SLASH_RE, '')
+      && isDeferredRoute(initialURL, nuxtApp.payload.path)
       && isSamePath(router.currentRoute.value.path, nuxtApp.payload.path)
 
     syncCurrentRoute()

@@ -60,3 +60,19 @@ export function memoizeRouteComponent<T> (load: () => Promise<T>): () => Promise
     throw error
   })
 }
+
+// matches a trailing slash on the path only, leaving query and hash significant
+const PATH_TRAILING_SLASH_RE = /\/(?=$|[?#])/
+
+/**
+ * Whether hydrating a prerendered page at `initialURL` should go through the
+ * deferred-route flow for the page prerendered at `payloadPath`.
+ *
+ * `payloadPath` never contains a hash, as the server never sees the fragment,
+ * so a URL that differs from it only by its hash is the same prerendered page.
+ * Query strings are still significant: a different query can mean different
+ * prerendered content.
+ */
+export function isDeferredRoute (initialURL: string, payloadPath: string): boolean {
+  return initialURL.split('#')[0]!.replace(PATH_TRAILING_SLASH_RE, '') !== payloadPath.replace(PATH_TRAILING_SLASH_RE, '')
+}
